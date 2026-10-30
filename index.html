@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>타겟 선택</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <div class="menu-title">🎯 타겟을 선택하세요</div>
+  <div class="menu-sub">원하는 타겟을 누르면 게임이 시작됩니다</div>
+  <div class="cards" id="cards"></div>
+</div>
+<script src="targets.js"></script>
+<script>
+  const { el, renderZones, fit } = TG_UTIL;
+  const cards = document.getElementById('cards');
+  TARGETS.forEach(T => {
+    const a = document.createElement('a');
+    a.className = 'card'; a.href = T.file;
+    a.innerHTML = `<svg></svg><div class="info"><div class="no">TARGET ${T.id}</div><div class="nm">${T.name}</div><div class="ds">${T.desc.replace(/\n/g, '<br>')}</div></div>`;
+    const svg = a.querySelector('svg');
+    svg.setAttribute('viewBox', T.view.join(' '));
+    renderZones(svg, T, null);
+    cards.appendChild(a);
+  });
+  fit();
+</script>
+</body>
+</html>

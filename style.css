@@ -1,0 +1,76 @@
+/* 기준 화면: 1920 x 900 (크롬 상단 탭/주소창/북마크바를 뺀 1920x1080 모니터 영역).
+   창 크기가 달라져도 JS가 전체를 비율 그대로 축소/확대해서 항상 한 화면에 맞춥니다.
+   레이아웃: 왼쪽 점수판 380px + 오른쪽 타겟 영역 1540 x 900 */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #0b1020; font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 900px; transform-origin: 0 0; overflow: hidden;
+  background: radial-gradient(ellipse at 60% 50%, #1b2447 0%, #0b1020 80%); }
+
+/* ---------- 점수판 (모든 타겟 페이지 동일 · 왼쪽 세로 배치) ---------- */
+#board { position: absolute; left: 0; top: 0; width: 380px; height: 900px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px; background: linear-gradient(#141b38, #0f1530); border-right: 4px solid #2b365f; z-index: 10; }
+#board.shake { animation: shake .4s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-7px)} 80%{transform:translateX(7px)} }
+
+.back { flex: 0 0 44px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #cfd8ff; font-size: 22px; font-weight: 800;
+  background: #2b365f; border-radius: 12px; }
+.back:hover { background: #3b4a82; color: #fff; }
+
+.team { flex: 0 0 92px; border-radius: 16px; background: #1d2650; border: 4px solid #2f3b70; cursor: pointer; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 22px 0 30px; transition: transform .12s, border-color .12s, box-shadow .12s; }
+.team::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 14px; background: var(--c); }
+.team:hover { transform: translateX(3px); }
+.team .tl { display: flex; align-items: center; gap: 10px; }
+.team .tname { font-size: 34px; font-weight: 800; color: #dfe6ff; }
+.team .mark { font-size: 17px; font-weight: 800; color: #0b1020; background: var(--c); border-radius: 9px; padding: 2px 9px; display: none; }
+.team .tscore { font-size: 62px; font-weight: 900; color: #fff; line-height: 1; font-variant-numeric: tabular-nums; }
+.team .tscore.neg { color: #ff8b8b; }
+.team.sel { border-color: var(--c); box-shadow: 0 0 0 3px var(--c), 0 0 26px var(--c); background: #28346a; }
+.team.sel .mark { display: block; }
+.team.bump .tscore { animation: bump .45s; }
+@keyframes bump { 0%{transform:scale(1)} 35%{transform:scale(1.25)} 100%{transform:scale(1)} }
+
+.ctlrow { flex: 0 0 110px; display: flex; gap: 8px; }
+.ctl { flex: 1; height: 110px; border-radius: 16px; border: none; cursor: pointer; font-family: inherit; font-size: 28px; font-weight: 900; color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: transform .1s, filter .1s; }
+.ctl .ic { font-size: 42px; line-height: 1; }
+.ctl:hover { filter: brightness(1.15); transform: translateY(-3px); }
+.ctl:active { transform: scale(.96); }
+#undo { background: #3b7cff; }
+#reset { background: #e0485a; }
+.ctl:disabled { opacity: .35; cursor: not-allowed; transform: none; filter: none; }
+
+/* ---------- 타겟 영역 (점수판을 뺀 나머지 전체) ---------- */
+#arena { position: absolute; left: 380px; top: 0; width: 1540px; height: 900px; }
+#target { position: absolute; left: 0; top: 0; width: 1540px; height: 900px; }
+#toast { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; padding: 30px 56px; border-radius: 26px;
+  font-size: 56px; font-weight: 900; color: #fff; background: rgba(90,31,43,.96); border: 5px solid #ff5a6e; text-align: center; line-height: 1.35;
+  opacity: 0; pointer-events: none; transition: opacity .2s; }
+#toast.show { opacity: 1; }
+
+/* 타겟 구역 */
+.zone { cursor: pointer; }
+.zone .shape { stroke: #fff; stroke-width: 2; stroke-linejoin: round; transition: filter .1s; }
+.zone:hover .shape { filter: brightness(1.2); }
+.zone .zt { fill: #fff; stroke: rgba(0,0,0,.6); stroke-width: 9; paint-order: stroke; stroke-linejoin: round; font-weight: 900;
+  text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif; }
+.zone.hit .shape { animation: flash .45s; }
+@keyframes flash { 0%{filter:brightness(2.2)} 100%{filter:brightness(1)} }
+#arena.locked .zone { cursor: not-allowed; opacity: .55; }
+.pop { font-size: 120px; font-weight: 900; text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,.75); stroke-width: 12; pointer-events: none; animation: rise .95s ease-out forwards;
+  font-family: "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif; }
+@keyframes rise { from{opacity:1; transform:translateY(0)} to{opacity:0; transform:translateY(-130px)} }
+
+/* ---------- 선택 페이지 ---------- */
+.menu-title { position: absolute; left: 0; top: 24px; width: 1920px; text-align: center; font-size: 60px; font-weight: 900; color: #fff; }
+.menu-sub { position: absolute; left: 0; top: 100px; width: 1920px; text-align: center; font-size: 28px; font-weight: 700; color: #8d9cd6; }
+.cards { position: absolute; left: 45px; top: 190px; width: 1830px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
+.card { height: 570px; border-radius: 26px; background: #1d2650; border: 4px solid #2f3b70; text-decoration: none; color: #fff;
+  display: flex; flex-direction: column; align-items: center; padding: 24px; transition: transform .15s, border-color .15s, box-shadow .15s; }
+.card:hover { transform: translateY(-8px); border-color: #ffd166; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+.card svg { flex: 0 0 auto; width: 534px; height: 312px; background: #121936; border-radius: 16px; }
+.card .info { text-align: center; }
+.card .no { margin-top: 22px; font-size: 26px; font-weight: 800; color: #ffd166; }
+.card .nm { margin-top: 4px; font-size: 52px; font-weight: 900; }
+.card .ds { margin-top: 12px; font-size: 26px; font-weight: 600; color: #aab6e8; line-height: 1.5; }
