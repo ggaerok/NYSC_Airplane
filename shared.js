@@ -6,8 +6,8 @@
 (function () {
   const { el, renderZones, fit, fmt } = window.TG_UTIL;
   const TEAMS = [
-    { n: '1팀', c: '#ff595e' }, { n: '2팀', c: '#ff9f1c' }, { n: '3팀', c: '#ffd23f' },
-    { n: '4팀', c: '#3ddc84' }, { n: '5팀', c: '#3a86ff' }, { n: '6팀', c: '#a06bff' }, { n: '7팀', c: '#ff5da2' },
+    { n: '1팀', c: '#ff8f94' }, { n: '2팀', c: '#ffb870' }, { n: '3팀', c: '#ffd96b' },
+    { n: '4팀', c: '#7de3a6' }, { n: '5팀', c: '#8fb8ff' }, { n: '6팀', c: '#c3a8ff' }, { n: '7팀', c: '#ff9fcb' },
   ];
   const KEY = 'targetGame.state.v1';
   let state = { scores: Array(7).fill(0), hist: [], sel: -1 };
