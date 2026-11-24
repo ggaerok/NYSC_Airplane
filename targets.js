@@ -1,14 +1,14 @@
 /* =====================================================================
    타겟 3종 정의 파일
    - 각 구역의 점수(score)는 여기서 고정되어 있습니다. 숫자를 바꾸면 모든 페이지에 반영됩니다.
-   - 좌표 기준: 타겟 영역 1540 x 900 (왼쪽 점수판 380px을 제외한 나머지 전체)
+   - 좌표 기준: 타겟 영역 1920 x 930 (전체화면 1920 x 1080에서 상단 점수판 150px을 제외한 나머지 전체)
    - 모든 타겟은 이 영역 전체를 빈틈없이 채우고, 구역은 9개, 경계선은 가는 선 하나로 통일되어 있습니다.
    ===================================================================== */
 (function () {
   const NS = 'http://www.w3.org/2000/svg';
   const COLORS = ['#e63946', '#f4a261', '#ffd23f', '#2a9d8f', '#3a86ff', '#8338ec',
                   '#ff5da2', '#06d6a0', '#8ac926', '#00b4d8', '#b5651d', '#9b5de5'];
-  const W = 1540, H = 900, CX = W / 2, CY = H / 2;
+  const W = 1920, H = 930, CX = W / 2, CY = H / 2;
 
   function el(tag, attrs, parent) {
     const e = document.createElementNS(NS, tag);
@@ -23,7 +23,7 @@
 
   /* ---------- 1. 사각 과녁: 바깥 4 + 안쪽 4 + 중앙 1 = 9구역 (사각형 틀이 겹겹이) ---------- */
   function t1() {
-    const R0 = [0, 0, W, H], R1 = [280, 165, W - 280, H - 165], R2 = [540, 320, W - 540, H - 320];
+    const R0 = [0, 0, W, H], R1 = [350, 170, W - 350, H - 170], R2 = [672, 330, W - 672, H - 330];
     const ring = (a, b, scores, c0, fs) => {
       const [ax0, ay0, ax1, ay1] = a, [bx0, by0, bx1, by1] = b;
       return [
@@ -62,10 +62,10 @@
     // 바깥 4구역 (타원 밖 ~ 영역 가장자리)
     const o = t => P(S_OUT, t);
     const outer = [
-      { d: `M0 0 L${W} 0 L${f(o(-45)[0])} ${f(o(-45)[1])} ${arc(S_OUT, o(-135), 0)} Z`, x: CX, y: 68 },
-      { d: `M${W} 0 L${W} ${H} L${f(o(45)[0])} ${f(o(45)[1])} ${arc(S_OUT, o(-45), 0)} Z`, x: W - 122, y: CY },
-      { d: `M${W} ${H} L0 ${H} L${f(o(135)[0])} ${f(o(135)[1])} ${arc(S_OUT, o(45), 0)} Z`, x: CX, y: H - 68 },
-      { d: `M0 ${H} L0 0 L${f(o(-135)[0])} ${f(o(-135)[1])} ${arc(S_OUT, o(-225), 0)} Z`, x: 122, y: CY },
+      { d: `M0 0 L${W} 0 L${f(o(-45)[0])} ${f(o(-45)[1])} ${arc(S_OUT, o(-135), 0)} Z`, x: CX, y: CY * (1 - S_OUT) / 2 },
+      { d: `M${W} 0 L${W} ${H} L${f(o(45)[0])} ${f(o(45)[1])} ${arc(S_OUT, o(-45), 0)} Z`, x: W - CX * (1 - S_OUT) / 2, y: CY },
+      { d: `M${W} ${H} L0 ${H} L${f(o(135)[0])} ${f(o(135)[1])} ${arc(S_OUT, o(45), 0)} Z`, x: CX, y: H - CY * (1 - S_OUT) / 2 },
+      { d: `M0 ${H} L0 0 L${f(o(-135)[0])} ${f(o(-135)[1])} ${arc(S_OUT, o(-225), 0)} Z`, x: CX * (1 - S_OUT) / 2, y: CY },
     ];
     [-3, -5, -2, -4].forEach((sc, i) => Z.push(Object.assign(outer[i], { score: sc, color: COLORS[5 + i], fs: 112 })));
     return Z;
@@ -102,11 +102,11 @@
     return zg;
   }
 
-  /* 1920 x 900 기준 화면을 창 크기에 맞춰 비율 그대로 축소/확대 */
+  /* 1920 x 1080 기준 화면을 창 크기에 맞춰 비율 그대로 축소/확대 (전체화면이면 정확히 1:1) */
   function fit() {
     const stage = document.getElementById('stage');
-    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 900);
-    stage.style.transform = `translate(${(window.innerWidth - 1920 * s) / 2}px, ${(window.innerHeight - 900 * s) / 2}px) scale(${s})`;
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = `translate(${(window.innerWidth - 1920 * s) / 2}px, ${(window.innerHeight - 1080 * s) / 2}px) scale(${s})`;
   }
   window.addEventListener('resize', fit);
 

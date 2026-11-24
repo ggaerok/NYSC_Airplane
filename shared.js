@@ -1,6 +1,6 @@
 /* =====================================================================
-   공통 점수판 + 게임 로직 (4개 타겟 페이지가 모두 이 파일을 사용합니다)
-   - 점수판은 화면 왼쪽에 모든 타겟에서 동일한 위치/크기로 표시됩니다.
+   공통 점수판 + 게임 로직 (3개 타겟 페이지가 모두 이 파일을 사용합니다)
+   - 점수판은 화면 상단(1920 x 150)에 모든 타겟에서 동일한 위치/크기로 표시됩니다. 팀은 8팀 고정.
    - 점수와 되돌리기 기록은 브라우저(localStorage)에 저장되어 페이지를 이동해도 유지됩니다.
    ===================================================================== */
 (function () {
@@ -8,14 +8,16 @@
   const TEAMS = [
     { n: '1팀', c: '#ffc2c7' }, { n: '2팀', c: '#ffd3a8' }, { n: '3팀', c: '#ffe9a0' },
     { n: '4팀', c: '#bff0d8' }, { n: '5팀', c: '#bfe1ff' }, { n: '6팀', c: '#d6c8f7' }, { n: '7팀', c: '#ffc9e3' },
+    { n: '8팀', c: '#d9ec9f' },
   ];
-  const KEY = 'targetGame.state.v1';
-  let state = { scores: Array(7).fill(0), hist: [], sel: -1 };
+  const N = TEAMS.length;                       // 8팀 고정
+  const KEY = 'targetGame.state.v2';            // v1(7팀) 저장값과 섞이지 않도록 키를 새로 사용
+  let state = { scores: Array(N).fill(0), hist: [], sel: -1 };
 
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && Array.isArray(s.scores) && s.scores.length === 7 && Array.isArray(s.hist)) {
+      if (s && Array.isArray(s.scores) && s.scores.length === N && Array.isArray(s.hist)) {
         state = { scores: s.scores.map(Number), hist: s.hist, sel: typeof s.sel === 'number' ? s.sel : -1 };
       }
     } catch (e) { /* 저장소를 못 쓰는 환경이면 무시 */ }
@@ -30,16 +32,16 @@
     stage.innerHTML = `
       <div id="board"></div>
       <div id="arena">
-        <svg id="target" viewBox="0 0 1540 900" xmlns="http://www.w3.org/2000/svg"></svg>
-        <div id="toast">먼저 왼쪽에서<br>팀을 선택하세요!</div>
+        <svg id="target" viewBox="0 0 1920 930" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="toast">먼저 위에서<br>팀을 선택하세요!</div>
       </div>`;
     const board = document.getElementById('board');
     const arena = document.getElementById('arena');
     const svg = document.getElementById('target');
     const toast = document.getElementById('toast');
 
-    /* 점수판 (위: 타겟 선택 이동 / 가운데: 7팀 / 아래: 되돌리기·초기화) */
-    board.insertAdjacentHTML('beforeend', '<a class="back" href="index.html">◀ 타겟 선택</a>');
+    /* 점수판 (왼쪽: 타겟 선택 이동 / 가운데: 8팀 / 오른쪽 끝: 되돌리기·초기화) */
+    board.insertAdjacentHTML('beforeend', '<a class="back" href="index.html"><span>◀</span><span>타겟 선택</span></a>');
     TEAMS.forEach((t, i) => {
       const d = document.createElement('div');
       d.className = 'team'; d.dataset.i = i; d.style.setProperty('--c', t.c);
@@ -64,6 +66,7 @@
       teamEls.forEach((e, i) => {
         const sc = e.querySelector('.tscore');
         sc.textContent = state.scores[i];
+        sc.dataset.len = String(sc.textContent.length);   // 글자 수가 많으면 CSS가 글자 크기를 줄여 칸 안에 맞춤
         sc.classList.toggle('neg', state.scores[i] < 0);
         e.classList.toggle('sel', i === state.sel);
         if (i === bumpIdx) { e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); }
@@ -116,7 +119,7 @@
         return;
       }
       clearTimeout(resetTimer); resetTimer = null; resetLabel(false);
-      state.scores = Array(7).fill(0); state.hist = []; save();
+      state.scores = Array(N).fill(0); state.hist = []; save();
       renderBoard();
     });
 
