@@ -103,15 +103,26 @@
   }
 
   /* 기준 화면을 창 크기에 맞춰 비율 그대로 축소/확대 (전체화면이면 정확히 1:1)
-     PC(top) = 1920 x 1080 / 휴대폰 가로(side) = 2160 x 930 (왼쪽 점수판 240 + 타겟 1920x930) */
+     PC(top) = 1920 x 1080 / 휴대폰(side) = 2200 x 930 (왼쪽 점수판 280 + 타겟 1920x930)
+     휴대폰을 세로로 들고 있으면 화면 전체를 90도 돌려서 처음부터 가로 화면처럼 꽉 차게 보여줍니다. */
   function fit() {
     const stage = document.getElementById('stage');
     const side = document.documentElement.getAttribute('data-layout') === 'side';
-    const SW = side ? 2160 : 1920, SH = side ? 930 : 1080;
-    const s = Math.min(window.innerWidth / SW, window.innerHeight / SH);
-    stage.style.transform = `translate(${(window.innerWidth - SW * s) / 2}px, ${(window.innerHeight - SH * s) / 2}px) scale(${s})`;
+    const SW = side ? 2200 : 1920, SH = side ? 930 : 1080;
+    let vw = window.innerWidth, vh = window.innerHeight;
+    const vv = window.visualViewport;                     // 브라우저가 화면을 넓게 부풀린 경우, 실제로 보이는 크기를 사용
+    if (vv && vv.scale <= 1.01 && vv.width < vw - 2) { vw = vv.width; vh = vv.height; }
+    if (side && vh > vw) {                                  // 휴대폰 세로: 90도 회전해서 가득 채움
+      const s = Math.min(vh / SW, vw / SH);
+      stage.style.transform = `translate(${(vw + SH * s) / 2}px, ${(vh - SW * s) / 2}px) rotate(90deg) scale(${s})`;
+    } else {
+      const s = Math.min(vw / SW, vh / SH);
+      stage.style.transform = `translate(${(vw - SW * s) / 2}px, ${(vh - SH * s) / 2}px) scale(${s})`;
+    }
   }
   window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', () => setTimeout(fit, 120));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
 
   window.TARGETS = TARGETS;
   window.TG_UTIL = { el, renderZones, fit, fmt };

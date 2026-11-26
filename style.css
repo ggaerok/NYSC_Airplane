@@ -19,7 +19,7 @@
   --sticker-press: 0 0 0 2px var(--ring);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #efe6cf; font-family: 'NotoSansKR', 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+html, body { position: fixed; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; background: #efe6cf; font-family: 'NotoSansKR', 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 
 #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; color: var(--ink);
   background-color: var(--paper);
@@ -144,38 +144,43 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #efe6cf; f
 #lk-modal button.pri { background: #8fd9b6; color: #154b33; }
 
 /* ======================================================================
-   휴대폰 가로 배치 (data-layout="side"): 2160 x 930 = 왼쪽 점수판 240 + 타겟 1920 x 930
-   PC(top) 배치는 위의 기존 규칙 그대로입니다.
+   휴대폰 배치 (data-layout="side"): 2200 x 930 = 왼쪽 점수판 280 + 타겟 1920 x 930
+   (세로로 들면 JS가 전체를 90도 돌려서 가로 화면처럼 채움) PC(top) 배치는 위의 기존 규칙 그대로입니다.
+   휴대폰에서는 전체가 약 1/3로 축소되므로 점수판 글자와 버튼을 PC보다 크게 잡았습니다.
    ====================================================================== */
-html[data-layout="side"] #stage { width: 2160px; height: 930px; }
-html[data-layout="side"] #board { left: 0; top: 0; width: 240px; height: 930px; padding: 10px; flex-direction: column; gap: 8px; border-bottom: 0; border-right: 3px dashed var(--dash); }
-html[data-layout="side"] .back { flex: 0 0 64px; flex-direction: row; gap: 8px; font-size: 22px; border-radius: 14px; }
-html[data-layout="side"] .team { flex-direction: row; justify-content: space-between; padding: 0 14px; gap: 6px; border-radius: 14px; }
-html[data-layout="side"] .team .tl { height: auto; gap: 6px; flex-direction: column; align-items: flex-start; }
-html[data-layout="side"] .team .tname { font-size: 28px; }
-html[data-layout="side"] .team .mark { font-size: 14px; padding: 1px 7px; }
-html[data-layout="side"] .team .tscore { font-size: 52px; }
-html[data-layout="side"] .team .tscore[data-len="5"] { font-size: 40px; }
-html[data-layout="side"] .team .tscore[data-len="6"] { font-size: 32px; }
-html[data-layout="side"] .team .tscore[data-len="7"], html[data-layout="side"] .team .tscore[data-len="8"] { font-size: 26px; }
+html[data-layout="side"] #stage { width: 2200px; height: 930px; }
+html[data-layout="side"] #board { left: 0; top: 0; width: 280px; height: 930px; padding: 10px; flex-direction: column; gap: 8px; border-bottom: 0; border-right: 3px dashed var(--dash); }
+html[data-layout="side"] .back { flex: 0 0 70px; flex-direction: row; gap: 8px; font-size: 28px; border-radius: 14px; }
+html[data-layout="side"] .team { flex-direction: row; justify-content: space-between; padding: 0 16px; gap: 6px; border-radius: 14px; }
+html[data-layout="side"] .team .tl { height: auto; gap: 4px; flex-direction: column; align-items: flex-start; }
+html[data-layout="side"] .team .tname { font-size: 38px; }
+html[data-layout="side"] .team .mark { font-size: 18px; padding: 1px 8px; }
+html[data-layout="side"] .team .tscore { font-size: 68px; }
+html[data-layout="side"] .team .tscore[data-len="4"] { font-size: 58px; }
+html[data-layout="side"] .team .tscore[data-len="5"] { font-size: 46px; }
+html[data-layout="side"] .team .tscore[data-len="6"] { font-size: 38px; }
+html[data-layout="side"] .team .tscore[data-len="7"], html[data-layout="side"] .team .tscore[data-len="8"] { font-size: 30px; }
 html[data-layout="side"] .team:hover, html[data-layout="side"] .team.sel { transform: none; }
-html[data-layout="side"] .ctlrow { flex: 0 0 92px; gap: 8px; }
-html[data-layout="side"] .ctl { font-size: 20px; border-radius: 14px; }
-html[data-layout="side"] .ctl .ic { font-size: 32px; }
-html[data-layout="side"] #arena { left: 240px; top: 0; }
-/* 선택 페이지들 (휴대폰 가로) */
-html[data-layout="side"] .menu-back { left: 20px; top: 16px; padding: 8px 20px; font-size: 22px; }
-html[data-layout="side"] .menu-band { left: 630px; top: 20px; height: 90px; }
-html[data-layout="side"] .menu-title { font-size: 46px; }
-html[data-layout="side"] .menu-sub { top: 130px; width: 2160px; font-size: 26px; }
-html[data-layout="side"] .cards { left: 30px; top: 190px; width: 2100px; gap: 28px; }
+html[data-layout="side"] .ctlrow { flex: 0 0 104px; gap: 8px; }
+html[data-layout="side"] .ctl { font-size: 26px; border-radius: 14px; }
+html[data-layout="side"] .ctl .ic { font-size: 38px; }
+html[data-layout="side"] #arena { left: 280px; top: 0; }
+html[data-layout="side"] #toast { font-size: 64px; }
+/* 선택 페이지들 (휴대폰) */
+html[data-layout="side"] .menu-back { left: 20px; top: 16px; padding: 10px 24px; font-size: 28px; }
+html[data-layout="side"] .menu-band { left: 650px; top: 20px; height: 100px; }
+html[data-layout="side"] .menu-title { font-size: 50px; }
+html[data-layout="side"] .menu-sub { top: 140px; width: 2200px; font-size: 30px; }
+html[data-layout="side"] .cards { left: 30px; top: 200px; width: 2140px; gap: 28px; }
 html[data-layout="side"] .card { height: 700px; }
 html[data-layout="side"] .modes { padding-top: 70px; }
 html[data-layout="side"] .mode { height: 500px; }
 html[data-layout="side"] .joinrow { bottom: 36px; }
-html[data-layout="side"] #stage > .lk-pill { right: 20px; bottom: 16px; }
+html[data-layout="side"] #stage > .lk-pill { right: 20px; bottom: 16px; font-size: 28px; }
+html[data-layout="side"] .lk-pill { font-size: 30px; padding: 10px 22px; }
+html[data-layout="side"] .lk-pill .peers, html[data-layout="side"] .lk-pill .qr { font-size: 24px; }
+html[data-layout="side"] .newroom { right: 20px; top: 16px; font-size: 22px; padding: 8px 16px; }
 
 .lk-pill .peers { color: #2f8f5b; font-size: 20px; }
 /* 첫 화면의 작은 '새 방 만들기' */
 .newroom { position: absolute; right: 36px; top: 36px; padding: 8px 18px; font-family: inherit; font-weight: 700; font-size: 20px; color: var(--ink-soft); background: #fff; border: 2px dashed var(--dash); border-radius: 12px; cursor: pointer; }
-html[data-layout="side"] .newroom { right: 20px; top: 16px; font-size: 18px; padding: 6px 14px; }
