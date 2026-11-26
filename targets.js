@@ -102,11 +102,14 @@
     return zg;
   }
 
-  /* 1920 x 1080 기준 화면을 창 크기에 맞춰 비율 그대로 축소/확대 (전체화면이면 정확히 1:1) */
+  /* 기준 화면을 창 크기에 맞춰 비율 그대로 축소/확대 (전체화면이면 정확히 1:1)
+     PC(top) = 1920 x 1080 / 휴대폰 가로(side) = 2160 x 930 (왼쪽 점수판 240 + 타겟 1920x930) */
   function fit() {
     const stage = document.getElementById('stage');
-    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    stage.style.transform = `translate(${(window.innerWidth - 1920 * s) / 2}px, ${(window.innerHeight - 1080 * s) / 2}px) scale(${s})`;
+    const side = document.documentElement.getAttribute('data-layout') === 'side';
+    const SW = side ? 2160 : 1920, SH = side ? 930 : 1080;
+    const s = Math.min(window.innerWidth / SW, window.innerHeight / SH);
+    stage.style.transform = `translate(${(window.innerWidth - SW * s) / 2}px, ${(window.innerHeight - SH * s) / 2}px) scale(${s})`;
   }
   window.addEventListener('resize', fit);
 
