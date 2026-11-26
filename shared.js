@@ -19,6 +19,7 @@
   let state = { scores: Array(N).fill(0), hist: [], sel: -1, rev: 0 };
   const seen = new Set();                        // 이미 반영한 동작 id (중복 수신 방지)
   const mine = [], undone = new Set();           // 이 화면에서 직접 누른 동작 (접속 직후 상대 점수를 받아도 잃지 않게 다시 얹음)
+  const HIST_MAX = 2000;                         // 연동 시 한 번에 보내는 점수판 데이터가 메시지 한도(256KB)를 넘지 않도록 약 70KB 이하로 제한
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   function load() {
@@ -103,7 +104,10 @@
     function apply(op) {
       if (seen.has(op.id)) return false;
       if (op.k === 'add' && state.hist.some(h => h.id === op.id)) return false;   // 이미 받은 점수판에 포함된 동작
-      if (op.k === 'add') { state.scores[op.t] += op.d; state.hist.push({ id: op.id, t: op.t, d: op.d }); }
+      if (op.k === 'add') {
+        state.scores[op.t] += op.d; state.hist.push({ id: op.id, t: op.t, d: op.d });
+        if (state.hist.length > HIST_MAX) state.hist.splice(0, state.hist.length - HIST_MAX);   // 되돌리기 기록은 최근 2000건까지만 (점수 자체는 그대로)
+      }
       else if (op.k === 'undo') {
         const i = state.hist.findIndex(h => h.id === op.target);
         if (i < 0) return false;
