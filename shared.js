@@ -18,6 +18,7 @@
   const KEY = linked ? 'targetGame.link.' + SYNC.room() : 'targetGame.state.v2';   // 단독/연동(방별) 저장 공간 분리
   let state = { scores: Array(N).fill(0), hist: [], sel: -1, rev: 0 };
   const seen = new Set();                        // 이미 반영한 동작 id (중복 수신 방지)
+  const mine = [], undone = new Set();           // 이 화면에서 직접 누른 동작 (접속 직후 상대 점수를 받아도 잃지 않게 다시 얹음)
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   function load() {
@@ -101,6 +102,7 @@
     /* 모든 점수 변화는 apply()를 거칩니다. (내 동작 / 상대 기기에서 온 동작 모두 같은 방식, id로 중복 방지) */
     function apply(op) {
       if (seen.has(op.id)) return false;
+      if (op.k === 'add' && state.hist.some(h => h.id === op.id)) return false;   // 이미 받은 점수판에 포함된 동작
       if (op.k === 'add') { state.scores[op.t] += op.d; state.hist.push({ id: op.id, t: op.t, d: op.d }); }
       else if (op.k === 'undo') {
         const i = state.hist.findIndex(h => h.id === op.target);
@@ -112,7 +114,7 @@
       seen.add(op.id); state.rev++; save();
       return true;
     }
-    const emit = op => { if (linked) SYNC.send('op', op); };
+    const emit = op => { if (linked) { SYNC.send('op', op); mine.push(op); if (op.k === 'undo') undone.add(op.target); } };
 
     function onZone(z, ev, g, zi) {
       if (state.sel < 0) {
@@ -168,7 +170,13 @@
           if (state.rev > 0) setTimeout(() => SYNC.send('state', { scores: state.scores, hist: state.hist, rev: state.rev }), Math.random() * 250);
         } else if (event === 'state') {                               // 더 최신 점수를 받으면 따라가기
           if (p.rev > state.rev && Array.isArray(p.scores) && p.scores.length === N) {
-            state.scores = p.scores.map(Number); state.hist = p.hist || []; state.rev = p.rev; save(); renderBoard();
+            state.scores = p.scores.map(Number); state.hist = p.hist || []; state.rev = p.rev;
+            mine.forEach(op => {                                       // 받은 점수판에 아직 없는 내 점수는 다시 얹기
+              if (op.k === 'add' && !undone.has(op.id) && !state.hist.some(h => h.id === op.id)) {
+                state.scores[op.t] += op.d; state.hist.push({ id: op.id, t: op.t, d: op.d }); state.rev++;
+              }
+            });
+            save(); renderBoard();
           }
         }
       }, () => SYNC.send('hello', {}));                               // 연결(재연결)될 때마다 최신 점수 요청

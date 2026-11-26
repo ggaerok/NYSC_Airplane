@@ -10,6 +10,7 @@
 <body>
 <div id="stage">
   <div class="menu-band"><div class="menu-title">🎯 진행 방식을 선택하세요</div></div>
+  <button class="newroom" id="newroom" type="button">새 방 만들기</button>
   <div class="modes">
     <a class="mode" id="m-solo" href="select.html">
       <div class="ic">🖥️</div>
@@ -35,7 +36,12 @@
   // QR로 들어온 경우(?room=) → 이미 연동 모드로 설정되어 있으니 바로 타겟 선택으로
   if (new URLSearchParams(location.search).get('room')) location.replace('select.html');
   document.getElementById('m-solo').addEventListener('click', () => S.setSolo());
-  document.getElementById('m-link').addEventListener('click', () => { S.setLink(S.lastRoom() || S.genRoom()); S.showQrNext(); });
+  // 휴대폰에서는 새 방을 만들지 않고 방 코드를 입력하게 함 (PC와 다른 방에 들어가는 실수 방지)
+  document.getElementById('m-link').addEventListener('click', e => {
+    if (S.layout === 'side') { e.preventDefault(); document.getElementById('code').focus(); return; }
+    S.setLink(S.lastRoom() || S.genRoom()); S.showQrNext();
+  });
+  document.getElementById('newroom').addEventListener('click', () => { S.setLink(S.genRoom()); S.showQrNext(); location.href = 'select.html'; });
   document.getElementById('join').addEventListener('submit', e => {
     e.preventDefault();
     const c = document.getElementById('code').value.toUpperCase().replace(/[^A-Z0-9]/g, '');

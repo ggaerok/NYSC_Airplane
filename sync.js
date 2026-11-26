@@ -33,10 +33,12 @@
   function joinUrl(code) { return new URL('index.html?room=' + code, location.href).href; }
 
   /* ---------- 실시간 연결 ---------- */
-  let client = null, channel = null, status = 'idle';
+  let client = null, channel = null, status = 'idle', peers = 0;
   const statusCbs = [];
   function setStatus(s) { status = s; statusCbs.forEach(f => f(s)); }
   function onStatus(f) { statusCbs.push(f); f(status); }
+  const peerCbs = [];
+  function onPeers(f) { peerCbs.push(f); f(peers); }
 
   function connect(onMsg, onOpen) {
     const code = room(); if (!code) return;
@@ -46,8 +48,11 @@
     client = new window.RealtimeClient(C.url.replace(/^http/, 'ws') + '/realtime/v1', { params: { apikey: C.key, eventsPerSecond: 30 } });
     channel = client.channel('tg-' + code, { config: { broadcast: { self: false, ack: false } } });
     channel.on('broadcast', { event: '*' }, m => { try { onMsg(m.event, m.payload || {}); } catch (e) { console.error(e); } });
+    channel.on('presence', { event: 'sync' }, () => {            // 같은 방에 접속한 기기 수
+      peers = Object.keys(channel.presenceState()).length; peerCbs.forEach(f => f(peers));
+    });
     channel.subscribe(s => {
-      if (s === 'SUBSCRIBED') { setStatus('online'); onOpen && onOpen(); }
+      if (s === 'SUBSCRIBED') { setStatus('online'); try { channel.track({ t: Date.now() }); } catch (e) {} onOpen && onOpen(); }
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') setStatus('offline');
     });
   }
@@ -62,11 +67,13 @@
     const code = room();
     const pill = document.createElement('div');
     pill.className = 'lk-pill';
-    pill.innerHTML = '<i class="dot"></i><span class="lbl"></span><b>방 ' + code + '</b><span class="qr">📱 QR</span>';
+    pill.innerHTML = '<i class="dot"></i><span class="lbl"></span><b>방 ' + code + '</b><span class="peers"></span><span class="qr">📱 QR</span>';
     parent.appendChild(pill);
     const lbl = pill.querySelector('.lbl');
     const names = { idle: '', connecting: '연결 중', online: '연결됨', offline: '끊김' };
     onStatus(s => { pill.dataset.s = s; lbl.textContent = names[s] || ''; lbl.style.display = names[s] ? '' : 'none'; });
+    const pe = pill.querySelector('.peers');
+    onPeers(n => { pe.textContent = n > 0 ? '기기 ' + n + '대' : ''; pe.style.display = n > 0 ? '' : 'none'; });
     pill.addEventListener('click', openModal);
     window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
@@ -82,23 +89,15 @@
         '<div class="qrbox">' + svg + '</div>' +
         '<div class="code">' + code + '</div>' +
         '<div class="url">' + url + '</div>' +
-        '<div class="tip">휴대폰 카메라로 QR을 찍거나, 휴대폰 첫 화면에서 방 코드를 입력하세요.<br>휴대폰은 <b>가로 화면</b>으로 사용합니다.</div>' +
-        '<div class="btns"><button id="lk-new">새 방 만들기</button><button id="lk-close" class="pri">닫기</button></div></div>';
+        '<div class="tip">휴대폰 카메라로 QR을 찍거나, 휴대폰 첫 화면에서 방 코드를 입력하세요.<br>양쪽 화면의 <b>방 코드가 같아야</b> 점수가 연동됩니다.</div>' +
+        '<div class="btns"><button id="lk-close" class="pri">닫기</button></div></div>';
       document.getElementById('stage').appendChild(m);
       m.addEventListener('click', e => { if (e.target === m) closeModal(); });
       m.querySelector('#lk-close').onclick = closeModal;
-      m.querySelector('#lk-new').onclick = () => { setLink(genRoom()); location.reload(); };
     }
     if (get('tg.showqr') === '1') { try { SS.removeItem('tg.showqr'); } catch (e) {} setTimeout(openModal, 0); }
   }
 
-  /* 세로 화면이면 가로로 돌리라는 안내 (휴대폰 배치일 때만 CSS로 표시) */
-  document.addEventListener('DOMContentLoaded', () => {
-    const d = document.createElement('div'); d.id = 'rotate';
-    d.innerHTML = '<div>📱↻</div><p>휴대폰을 <b>가로</b>로 돌려주세요</p>';
-    document.body.appendChild(d);
-  });
-
-  window.TG_SYNC = { mode, room, layout, genRoom, setSolo, setLink, lastRoom, joinUrl, connect, send, onStatus, mountPill,
+  window.TG_SYNC = { mode, room, layout, genRoom, setSolo, setLink, lastRoom, joinUrl, connect, send, onStatus, onPeers, mountPill,
     showQrNext() { try { SS.setItem('tg.showqr', '1'); } catch (e) {} } };
 })();
