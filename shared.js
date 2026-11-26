@@ -20,6 +20,14 @@
   const seen = new Set();                        // 이미 반영한 동작 id (중복 수신 방지)
   const mine = [], undone = new Set();           // 이 화면에서 직접 누른 동작 (접속 직후 상대 점수를 받아도 잃지 않게 다시 얹음)
   const HIST_MAX = 500;                          // 되돌리기 기록은 최근 500건까지만 기억 (연동 시 보내는 데이터도 약 18KB 이하)
+  const ICON_PATHS = {
+    undo:  '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
+    reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>',
+    power: '<path d="M12 3v8"/><path d="M6.4 6.8a8 8 0 1 0 11.2 0"/>',
+    alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 16.4v.4"/>',
+    check: '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/>',
+  };
+  const icon = n => '<svg class="svgic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[n] + '</svg>';
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   function load() {
@@ -59,9 +67,9 @@
     });
     board.insertAdjacentHTML('beforeend',
       `<div class="ctlrow">
-         <button class="ctl" id="undo"><span class="ic">↶</span>되돌리기</button>
-         <button class="ctl" id="reset"><span class="ic">↺</span>초기화</button>
-         <button class="ctl" id="endbtn"><span class="ic">⏻</span>종료</button>
+         <button class="ctl" id="undo"><span class="ic">${icon('undo')}</span>되돌리기</button>
+         <button class="ctl" id="reset"><span class="ic">${icon('reset')}</span>초기화</button>
+         <button class="ctl" id="endbtn"><span class="ic">${icon('power')}</span>종료</button>
        </div>`);
     const teamEls = [...board.querySelectorAll('.team')];
     const undoBtn = document.getElementById('undo');
@@ -148,7 +156,7 @@
     /* 초기화: 실수 방지를 위해 3초 안에 한 번 더 누르면 실행 */
     let resetTimer = null;
     function resetLabel(armed) {
-      resetBtn.innerHTML = armed ? '<span class="ic">❗</span>한 번 더!' : '<span class="ic">↺</span>초기화';
+      resetBtn.innerHTML = armed ? '<span class="ic">' + icon('alert') + '</span>한 번 더!' : '<span class="ic">' + icon('reset') + '</span>초기화';
     }
     resetBtn.addEventListener('click', () => {
       if (!resetTimer) {
@@ -167,7 +175,7 @@
     function openConfirm() {
       closeConfirm();
       const m = document.createElement('div'); m.id = 'cfm';
-      m.innerHTML = `<div class="box"><div class="h">⏻ 종료하시겠습니까?</div>
+      m.innerHTML = `<div class="box"><div class="h"><span class="hic">${icon('power')}</span>종료하시겠습니까?</div>
         <div class="msg">모든 점수 기록, 합계 점수, 되돌리기 기록이<br><b>전부 삭제</b>되고 창이 닫힙니다.<br>삭제한 기록은 되돌릴 수 없습니다.${linked ? '<br><span class="sub">연동된 상대 기기의 점수도 함께 삭제됩니다.</span>' : ''}</div>
         <div class="btns"><button id="cfm-no">취소</button><button id="cfm-yes" class="danger">종료하고 삭제</button></div></div>`;
       document.getElementById('stage').appendChild(m);
@@ -188,7 +196,7 @@
       setTimeout(() => {
         SYNC.disconnect(); wipeLocal(); renderBoard();
         const o = document.createElement('div'); o.id = 'ended';
-        o.innerHTML = '<div class="box"><div class="ic">✅</div><div class="h">모든 기록이 삭제되었습니다</div><div class="msg">이 창(탭)을 닫아 주세요.</div><a href="index.html">첫 화면으로</a></div>';
+        o.innerHTML = '<div class="box"><div class="ic">' + icon('check') + '</div><div class="h">모든 기록이 삭제되었습니다</div><div class="msg">이 창(탭)을 닫아 주세요.</div><a href="index.html">첫 화면으로</a></div>';
         try { window.close(); } catch (e) {}                        // 직접 연 창이 아니면 브라우저가 닫기를 막으므로, 안내 화면을 함께 띄움
         document.getElementById('stage').appendChild(o);
       }, linked ? 250 : 0);

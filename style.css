@@ -203,3 +203,10 @@ html[data-layout="side"] .newroom { right: 20px; top: 16px; font-size: 22px; pad
 #ended { flex-direction: column; }
 #ended .ic { font-size: 90px; }
 #ended a { display: inline-block; margin-top: 26px; padding: 14px 34px; font-size: 28px; font-weight: 800; text-decoration: none; color: #6b5a3a; background: #e8dfc8; border: 4px solid #fff; border-radius: 16px; box-shadow: var(--sticker); }
+
+/* 글꼴에 의존하지 않는 SVG 아이콘 */
+.svgic { width: 1em; height: 1em; display: block; }
+.ctl .ic { display: flex; align-items: center; justify-content: center; }
+#cfm .h { display: flex; align-items: center; justify-content: center; gap: 14px; }
+#cfm .hic { display: inline-flex; font-size: 56px; }
+#ended .ic { color: #3fb97a; display: flex; justify-content: center; }
