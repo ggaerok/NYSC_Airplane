@@ -47,7 +47,8 @@ html, body { position: fixed; left: 0; top: 0; width: 100%; height: 100%; overfl
 .team .mark { font-size: 16px; font-weight: 800; color: #fff; background: var(--ink); border-radius: 9px; padding: 2px 8px; display: none; }
 .team .tscore { font-size: 64px; font-weight: 800; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
 .team .tscore.neg { color: var(--red); }
-.team .tscore[data-len="5"] { font-size: 48px; }
+.team .tscore[data-len="4"] { font-size: 54px; }
+.team .tscore[data-len="5"] { font-size: 44px; }
 .team .tscore[data-len="6"] { font-size: 40px; }
 .team .tscore[data-len="7"], .team .tscore[data-len="8"] { font-size: 32px; }
 .team.sel { box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--gold); transform: scale(1.03); }
@@ -56,14 +57,15 @@ html, body { position: fixed; left: 0; top: 0; width: 100%; height: 100%; overfl
 @keyframes bump { 0%{transform:scale(1)} 35%{transform:scale(1.25)} 100%{transform:scale(1)} }
 
 /* 되돌리기 · 초기화: 점수판 가장 오른쪽 */
-.ctlrow { flex: 0 0 312px; display: flex; gap: 12px; }
-.ctl { flex: 1; height: 100%; border-radius: 22px; border: 4px solid #fff; box-shadow: var(--sticker); cursor: pointer; font-family: inherit; font-size: 28px; font-weight: 800;
+.ctlrow { flex: 0 0 390px; display: flex; gap: 10px; }
+.ctl { flex: 1; min-width: 0; height: 100%; border-radius: 22px; border: 4px solid #fff; box-shadow: var(--sticker); cursor: pointer; font-family: inherit; font-size: 26px; font-weight: 800;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: transform .08s; }
 .ctl .ic { font-size: 42px; line-height: 1; }
 .ctl:hover { transform: translateY(-3px) rotate(-.6deg); }
 .ctl:active { transform: translateY(2px); box-shadow: var(--sticker-press); }
 #undo { background: #8fd9b6; color: #154b33; }
 #reset { background: #fff; color: var(--red); }
+#endbtn { background: var(--ink); color: #fffdf6; }
 .ctl:disabled, #undo:disabled { background: #efe9d9; color: #a3977c; border: 3px dashed #cfc3a8; box-shadow: none; cursor: not-allowed; transform: none; }
 
 /* ---------- 타겟 영역 (점수판 아래 전체) ---------- */
@@ -150,7 +152,7 @@ html, body { position: fixed; left: 0; top: 0; width: 100%; height: 100%; overfl
    ====================================================================== */
 html[data-layout="side"] #stage { width: 2200px; height: 930px; }
 html[data-layout="side"] #board { left: 0; top: 0; width: 280px; height: 930px; padding: 10px; flex-direction: column; gap: 8px; border-bottom: 0; border-right: 3px dashed var(--dash); }
-html[data-layout="side"] .back { flex: 0 0 70px; flex-direction: row; gap: 8px; font-size: 28px; border-radius: 14px; }
+html[data-layout="side"] .back { flex: 0 0 60px; flex-direction: row; gap: 8px; font-size: 28px; border-radius: 14px; }
 html[data-layout="side"] .team { flex-direction: row; justify-content: space-between; padding: 0 16px; gap: 6px; border-radius: 14px; }
 html[data-layout="side"] .team .tl { height: auto; gap: 4px; flex-direction: column; align-items: flex-start; }
 html[data-layout="side"] .team .tname { font-size: 38px; }
@@ -161,9 +163,11 @@ html[data-layout="side"] .team .tscore[data-len="5"] { font-size: 46px; }
 html[data-layout="side"] .team .tscore[data-len="6"] { font-size: 38px; }
 html[data-layout="side"] .team .tscore[data-len="7"], html[data-layout="side"] .team .tscore[data-len="8"] { font-size: 30px; }
 html[data-layout="side"] .team:hover, html[data-layout="side"] .team.sel { transform: none; }
-html[data-layout="side"] .ctlrow { flex: 0 0 104px; gap: 8px; }
+html[data-layout="side"] .ctlrow { flex: 0 0 180px; gap: 8px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+html[data-layout="side"] #undo { grid-column: 1 / 3; }
 html[data-layout="side"] .ctl { font-size: 26px; border-radius: 14px; }
-html[data-layout="side"] .ctl .ic { font-size: 38px; }
+html[data-layout="side"] .ctl { flex-direction: row; gap: 8px; }
+html[data-layout="side"] .ctl .ic { font-size: 32px; }
 html[data-layout="side"] #arena { left: 280px; top: 0; }
 html[data-layout="side"] #toast { font-size: 64px; }
 /* 선택 페이지들 (휴대폰) */
@@ -184,3 +188,18 @@ html[data-layout="side"] .newroom { right: 20px; top: 16px; font-size: 22px; pad
 .lk-pill .peers { color: #2f8f5b; font-size: 20px; }
 /* 첫 화면의 작은 '새 방 만들기' */
 .newroom { position: absolute; right: 36px; top: 36px; padding: 8px 18px; font-family: inherit; font-weight: 700; font-size: 20px; color: var(--ink-soft); background: #fff; border: 2px dashed var(--dash); border-radius: 12px; cursor: pointer; }
+
+/* 종료 확인 팝업 / 종료 완료 화면 */
+#cfm, #ended { position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(74,63,42,.6); }
+#ended { z-index: 70; background: var(--paper); }
+#cfm .box, #ended .box { width: 820px; padding: 36px 44px 40px; border-radius: 26px; background: var(--paper); border: 5px solid #fff; box-shadow: 0 0 0 3px var(--ring), 0 14px 30px rgba(0,0,0,.35); text-align: center; color: var(--ink); }
+#cfm .h, #ended .h { font-size: 52px; font-weight: 800; }
+#cfm .msg, #ended .msg { margin-top: 18px; font-size: 32px; font-weight: 700; color: var(--ink-soft); line-height: 1.55; }
+#cfm .msg b { color: var(--red); }
+#cfm .msg .sub { font-size: 26px; }
+#cfm .btns { display: flex; gap: 20px; justify-content: center; margin-top: 30px; }
+#cfm button { height: 78px; padding: 0 44px; font-family: inherit; font-weight: 800; font-size: 32px; color: var(--ink); background: #fff; border: 4px solid #fff; border-radius: 18px; box-shadow: var(--sticker); cursor: pointer; }
+#cfm button.danger { background: var(--red); color: #fff; }
+#ended { flex-direction: column; }
+#ended .ic { font-size: 90px; }
+#ended a { display: inline-block; margin-top: 26px; padding: 14px 34px; font-size: 28px; font-weight: 800; text-decoration: none; color: #6b5a3a; background: #e8dfc8; border: 4px solid #fff; border-radius: 16px; box-shadow: var(--sticker); }

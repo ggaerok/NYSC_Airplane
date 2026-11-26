@@ -19,7 +19,7 @@
   let state = { scores: Array(N).fill(0), hist: [], sel: -1, rev: 0 };
   const seen = new Set();                        // 이미 반영한 동작 id (중복 수신 방지)
   const mine = [], undone = new Set();           // 이 화면에서 직접 누른 동작 (접속 직후 상대 점수를 받아도 잃지 않게 다시 얹음)
-  const HIST_MAX = 2000;                         // 연동 시 한 번에 보내는 점수판 데이터가 메시지 한도(256KB)를 넘지 않도록 약 70KB 이하로 제한
+  const HIST_MAX = 500;                          // 되돌리기 기록은 최근 500건까지만 기억 (연동 시 보내는 데이터도 약 18KB 이하)
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   function load() {
@@ -61,10 +61,12 @@
       `<div class="ctlrow">
          <button class="ctl" id="undo"><span class="ic">↶</span>되돌리기</button>
          <button class="ctl" id="reset"><span class="ic">↺</span>초기화</button>
+         <button class="ctl" id="endbtn"><span class="ic">⏻</span>종료</button>
        </div>`);
     const teamEls = [...board.querySelectorAll('.team')];
     const undoBtn = document.getElementById('undo');
     const resetBtn = document.getElementById('reset');
+    const endBtn = document.getElementById('endbtn');
 
     /* 타겟 */
     const zoneEls = [...renderZones(svg, T, (z, ev, g) => onZone(z, ev, g, T.zones.indexOf(z))).children];
@@ -83,7 +85,9 @@
       arena.classList.toggle('locked', state.sel < 0);
     }
     let toastTimer = null;
-    function showToast() {
+    const TOAST_DEFAULT = toast.innerHTML;
+    function showToast(msg) {
+      toast.innerHTML = msg || TOAST_DEFAULT;
       toast.classList.add('show'); clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove('show'), 1300);
     }
@@ -106,7 +110,7 @@
       if (op.k === 'add' && state.hist.some(h => h.id === op.id)) return false;   // 이미 받은 점수판에 포함된 동작
       if (op.k === 'add') {
         state.scores[op.t] += op.d; state.hist.push({ id: op.id, t: op.t, d: op.d });
-        if (state.hist.length > HIST_MAX) state.hist.splice(0, state.hist.length - HIST_MAX);   // 되돌리기 기록은 최근 2000건까지만 (점수 자체는 그대로)
+        if (state.hist.length > HIST_MAX) state.hist.splice(0, state.hist.length - HIST_MAX);   // 되돌리기 기록은 최근 500건까지만 (점수 자체는 그대로)
       }
       else if (op.k === 'undo') {
         const i = state.hist.findIndex(h => h.id === op.target);
@@ -158,6 +162,38 @@
       renderBoard();
     });
 
+    /* ---------- 종료: 확인 팝업 → 모든 기록 삭제 → 창 닫기 ---------- */
+    function closeConfirm() { const m = document.getElementById('cfm'); if (m) m.remove(); }
+    function openConfirm() {
+      closeConfirm();
+      const m = document.createElement('div'); m.id = 'cfm';
+      m.innerHTML = `<div class="box"><div class="h">⏻ 종료하시겠습니까?</div>
+        <div class="msg">모든 점수 기록, 합계 점수, 되돌리기 기록이<br><b>전부 삭제</b>되고 창이 닫힙니다.<br>삭제한 기록은 되돌릴 수 없습니다.${linked ? '<br><span class="sub">연동된 상대 기기의 점수도 함께 삭제됩니다.</span>' : ''}</div>
+        <div class="btns"><button id="cfm-no">취소</button><button id="cfm-yes" class="danger">종료하고 삭제</button></div></div>`;
+      document.getElementById('stage').appendChild(m);
+      m.addEventListener('click', e => { if (e.target === m) closeConfirm(); });
+      m.querySelector('#cfm-no').onclick = closeConfirm;
+      m.querySelector('#cfm-yes').onclick = doEnd;
+    }
+    window.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirm(); });
+    endBtn.addEventListener('click', openConfirm);
+
+    function wipeLocal() {                                         // 이 브라우저에 남은 모든 기록 삭제
+      state = { scores: Array(N).fill(0), hist: [], sel: -1, rev: 0 }; seen.clear(); mine.length = 0; undone.clear();
+      SYNC.wipeStorage();
+    }
+    function doEnd() {
+      closeConfirm();
+      if (linked) SYNC.send('wipe', { id: uid() });                 // 상대 기기에도 삭제 알림
+      setTimeout(() => {
+        SYNC.disconnect(); wipeLocal(); renderBoard();
+        const o = document.createElement('div'); o.id = 'ended';
+        o.innerHTML = '<div class="box"><div class="ic">✅</div><div class="h">모든 기록이 삭제되었습니다</div><div class="msg">이 창(탭)을 닫아 주세요.</div><a href="index.html">첫 화면으로</a></div>';
+        try { window.close(); } catch (e) {}                        // 직접 연 창이 아니면 브라우저가 닫기를 막으므로, 안내 화면을 함께 띄움
+        document.getElementById('stage').appendChild(o);
+      }, linked ? 250 : 0);
+    }
+
     /* ---------- 모바일 연동: 상대 기기에서 온 메시지 처리 ---------- */
     if (linked) {
       SYNC.mountPill(arena);
@@ -170,6 +206,9 @@
             zg.classList.remove('hit'); void zg.getBoundingClientRect(); zg.classList.add('hit');
             popAt(zz.x, zz.y, p.d);
           }
+        } else if (event === 'wipe') {                                // 상대 기기에서 종료 → 이 기기의 기록도 삭제
+          const keepRoom = SYNC.room(); wipeLocal(); SYNC.setLink(keepRoom); renderBoard();
+          showToast('상대 기기에서 종료하여<br>모든 기록이 삭제되었습니다');
         } else if (event === 'hello') {                               // 새로 들어온 기기에 현재 점수 알려주기
           if (state.rev > 0) setTimeout(() => SYNC.send('state', { scores: state.scores, hist: state.hist, rev: state.rev }), Math.random() * 250);
         } else if (event === 'state') {                               // 더 최신 점수를 받으면 따라가기

@@ -56,6 +56,13 @@
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') setStatus('offline');
     });
   }
+  function disconnect() { try { if (channel) channel.unsubscribe(); if (client) client.disconnect(); } catch (e) {} channel = null; client = null; setStatus('offline'); }
+  function wipeStorage() {                         // 이 브라우저에 저장된 점수/기록/방 정보를 모두 삭제
+    try {
+      Object.keys(LS).filter(k => k.indexOf('targetGame.') === 0 || k.indexOf('tg.') === 0).forEach(k => LS.removeItem(k));
+      Object.keys(SS).filter(k => k.indexOf('tg.') === 0).forEach(k => SS.removeItem(k));
+    } catch (e) {}
+  }
   function send(event, payload) {
     if (!channel) return;
     try { channel.send({ type: 'broadcast', event, payload }); } catch (e) { setStatus('offline'); }
@@ -98,6 +105,6 @@
     if (get('tg.showqr') === '1') { try { SS.removeItem('tg.showqr'); } catch (e) {} setTimeout(openModal, 0); }
   }
 
-  window.TG_SYNC = { mode, room, layout, genRoom, setSolo, setLink, lastRoom, joinUrl, connect, send, onStatus, onPeers, mountPill,
+  window.TG_SYNC = { mode, room, layout, genRoom, setSolo, setLink, lastRoom, joinUrl, connect, send, disconnect, wipeStorage, onStatus, onPeers, mountPill,
     showQrNext() { try { SS.setItem('tg.showqr', '1'); } catch (e) {} } };
 })();
